@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PLTPH Monitor - Telkom University</title>
+  <style>
+    /* Reset */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #ab0101;
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 15px 30px;
+      flex-wrap: wrap;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .left-group {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    img.logo {
+      height: 45px;
+      width: auto;
+      display: block;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      color: #d02027;
+      font-weight: 700;
+      margin: 0;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .right-group {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-size: 0.95rem;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .status-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #28a745;
+      animation: pulse 2s infinite;
+    }
+
+    .status-indicator.offline {
+      background: #dc3545;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    main {
+      flex-grow: 1;
+      padding: 30px 40px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .metrics-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .metric-card {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .metric-title {
+      font-size: 0.9rem;
+      color: #666;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .metric-icon {
+      width: 20px;
+      height: 20px;
+      fill: #999;
+    }
+
+    .metric-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #222;
+      margin: 8px 0 0 0;
+    }
+
+    .metric-description {
+      font-size: 0.85rem;
+      color: #888;
+      margin: 0;
+    }
+
+    .charts-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 20px;
+    }
+
+    .chart-card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      min-height: 400px;
+    }
+
+    .chart-header {
+      margin-bottom: 16px;
+    }
+
+    .chart-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #222;
+      margin: 0 0 4px 0;
+    }
+
+    .chart-subtitle {
+      font-size: 0.85rem;
+      color: #666;
+      margin: 0;
+    }
+
+    .chart-container {
+      flex-grow: 1;
+      position: relative;
+      min-height: 320px;
+    }
+
+    .chart-canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    .chart-legend {
+      display: flex;
+      justify-content: flex-end;
+      gap: 20px;
+      margin-top: 12px;
+      font-size: 0.8rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .legend-color.turbin {
+      background: #dc3545;
+    }
+
+    .legend-color.generator {
+      background: #007bff;
+    }
+
+    /* Loading animation */
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #d02027;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      header {
+        padding: 10px 20px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .right-group {
+        font-size: 0.85rem;
+      }
+
+      main {
+        padding: 20px;
+        gap: 20px;
+      }
+
+      .metrics-container {
+        grid-template-columns: 1fr;
+      }
+
+      .charts-container {
+        grid-template-columns: 1fr;
+      }
+
+      .metric-card {
+        padding: 20px;
+      }
+
+      .metric-value {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="left-group">
+      <img src="logo.png" alt="Telkom University Logo" class="logo" />
+      <h1>PLTPH Monitor</h1>
+    </div>
+    <div class="right-group">
+      <div class="status-text">
+        <span class="loading" id="loading" style="display: none;"></span>
+        <span>Status Koneksi</span>
+        <div class="status-indicator" id="statusIndicator"></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="metrics-container">
+      <div class="metric-card">
+        <div class="metric-header">
+          <h3 class="metric-title">Frekuensi (Hz)</h3>
+          <svg class="metric-icon" viewBox="0 0 24 24">
+            <path d="M3 12c1.5-6 3-6 4.5 0S10.5 18 12 12s3-6 4.5 0 3 6 4.5 0" stroke="currentColor" stroke-width="2" fill="none"/>
+          </svg>
+        </div>
+        <div class="metric-value" id="frekuensiValue">-</div>
+        <p class="metric-description">Data real-time frekuensi sistem</p>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <h3 class="metric-title">RPM Turbin (IR)</h3>
+          <svg class="metric-icon" viewBox="0 0 24 24">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="metric-value" id="rpmTurbinValue">-</div>
+        <p class="metric-description">Rotasi per menit dari sensor turbin</p>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <h3 class="metric-title">RPM Generator (Hall)</h3>
+          <svg class="metric-icon" viewBox="0 0 24 24">
+            <path d="M7 2l10 9h-4l4 9-10-9h4z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="metric-value" id="rpmGeneratorValue">-</div>
+        <p class="metric-description">Rotasi per menit dari sensor generator</p>
+      </div>
+    </section>
+
+    <section class="charts-container">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h2 class="chart-title">Grafik Data Frekuensi</h2>
+          <p class="chart-subtitle">Menampilkan 50 data terakhir yang diterima</p>
+        </div>
+        <div class="chart-container">
+          <canvas id="frequencyChart" class="chart-canvas"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <h2 class="chart-title">Perbandingan RPM</h2>
+          <p class="chart-subtitle">Turbin (Sensor IR) vs. Generator (Sensor Hall)</p>
+        </div>
+        <div class="chart-container">
+          <canvas id="rpmChart" class="chart-canvas"></canvas>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item">
+            <div class="legend-color turbin"></div>
+            <span>RPM Turbin (IR)</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color generator"></div>
+            <span>RPM Generator (Hall)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA9b5T5pmSYgM_zX-IvlQYu342K7leMmwA",
+      authDomain: "monitorpltph.firebaseapp.com",
+      databaseURL: "https://monitorpltph-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "monitorpltph",
+      storageBucket: "monitorpltph.firebasestorage.app",
+      messagingSenderId: "2851968271",
+      appId: "1:2851968271:web:075a5ab6d2e5eeac82da7a",
+      measurementId: "G-NM81JKD3TR"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // DOM elements
+    const frekuensiValue = document.getElementById('frekuensiValue');
+    const rpmTurbinValue = document.getElementById('rpmTurbinValue');
+    const rpmGeneratorValue = document.getElementById('rpmGeneratorValue');
+    const statusIndicator = document.getElementById('statusIndicator');
+    const loading = document.getElementById('loading');
+
+    // Data storage for charts
+    let frequencyData = [];
+    let rpmIRData = [];
+    let rpmHallData = [];
+    let timeLabels = [];
+    let maxDataPoints = 50;
+
+    // Chart contexts
+    const frequencyCtx = document.getElementById('frequencyChart').getContext('2d');
+    const rpmCtx = document.getElementById('rpmChart').getContext('2d');
+
+    // Chart drawing functions
+    function drawChart(ctx, data, labels, title, color, yMin = 0, yMax = null) {
+      const canvas = ctx.canvas;
+      const width = canvas.width;
+      const height = canvas.height;
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, width, height);
+      
+      // Set canvas size
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      const w = canvas.width;
+      const h = canvas.height;
+      
+      if (data.length === 0) {
+        drawEmptyChart(ctx, w, h, yMin, yMax, title);
+        return;
+      }
+      
+      // Chart margins
+      const margin = { top: 20, right: 40, bottom: 40, left: 60 };
+      const chartWidth = w - margin.left - margin.right;
+      const chartHeight = h - margin.top - margin.bottom;
+      
+      // Use fixed range
+      const minVal = yMin;
+      const maxVal = yMax;
+      const range = maxVal - minVal;
+      
+      // Draw background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      
+      // Draw chart background
+      ctx.fillStyle = '#fafafa';
+      ctx.fillRect(margin.left, margin.top, chartWidth, chartHeight);
+      
+      // Draw grid lines
+      ctx.strokeStyle = '#e0e0e0';
+      ctx.lineWidth = 1;
+      
+      // Horizontal grid lines
+      for (let i = 0; i <= 5; i++) {
+        const y = margin.top + (chartHeight / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(margin.left, y);
+        ctx.lineTo(margin.left + chartWidth, y);
+        ctx.stroke();
+      }
+      
+      // Vertical grid lines
+      const verticalLines = 8;
+      for (let i = 0; i <= verticalLines; i++) {
+        const x = margin.left + (chartWidth / verticalLines) * i;
+        ctx.beginPath();
+        ctx.moveTo(x, margin.top);
+        ctx.lineTo(x, margin.top + chartHeight);
+        ctx.stroke();
+      }
+      
+      // Draw Y-axis labels
+      ctx.fillStyle = '#666';
+      ctx.font = '11px Arial';
+      ctx.textAlign = 'right';
+      
+      for (let i = 0; i <= 5; i++) {
+        const value = minVal + (range / 5) * (5 - i);
+        const y = margin.top + (chartHeight / 5) * i;
+        ctx.fillText(value.toFixed(0), margin.left - 10, y + 4);
+      }
+      
+      // Draw X-axis labels (simplified)
+      ctx.textAlign = 'center';
+      ctx.fillText('02:27', margin.left + 20, margin.top + chartHeight + 25);
+      ctx.fillText('02:27', margin.left + chartWidth - 20, margin.top + chartHeight + 25);
+      
+      // Draw data line
+      if (data.length > 1) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        
+        for (let i = 0; i < data.length; i++) {
+          const x = margin.left + (chartWidth / (data.length - 1)) * i;
+          const y = margin.top + chartHeight - ((data[i] - minVal) / range) * chartHeight;
+          
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.stroke();
+      }
+    }
+    
+    function drawEmptyChart(ctx, w, h, yMin, yMax, title) {
+      const margin = { top: 20, right: 40, bottom: 40, left: 60 };
+      const chartWidth = w - margin.left - margin.right;
+      const chartHeight = h - margin.top - margin.bottom;
+      const range = yMax - yMin;
+      
+      // Draw background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      
+      // Draw chart background
+      ctx.fillStyle = '#fafafa';
+      ctx.fillRect(margin.left, margin.top, chartWidth, chartHeight);
+      
+      // Draw grid lines
+      ctx.strokeStyle = '#e0e0e0';
+      ctx.lineWidth = 1;
+      
+      // Horizontal grid lines
+      for (let i = 0; i <= 5; i++) {
+        const y = margin.top + (chartHeight / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(margin.left, y);
+        ctx.lineTo(margin.left + chartWidth, y);
+        ctx.stroke();
+      }
+      
+      // Vertical grid lines
+      const verticalLines = 8;
+      for (let i = 0; i <= verticalLines; i++) {
+        const x = margin.left + (chartWidth / verticalLines) * i;
+        ctx.beginPath();
+        ctx.moveTo(x, margin.top);
+        ctx.lineTo(x, margin.top + chartHeight);
+        ctx.stroke();
+      }
+      
+      // Draw Y-axis labels
+      ctx.fillStyle = '#666';
+      ctx.font = '11px Arial';
+      ctx.textAlign = 'right';
+      
+      for (let i = 0; i <= 5; i++) {
+        const value = yMin + (range / 5) * (5 - i);
+        const y = margin.top + (chartHeight / 5) * i;
+        ctx.fillText(value.toFixed(0), margin.left - 10, y + 4);
+      }
+      
+      // Draw X-axis labels
+      ctx.textAlign = 'center';
+      ctx.fillText('02:27', margin.left + 20, margin.top + chartHeight + 25);
+      ctx.fillText('02:27', margin.left + chartWidth - 20, margin.top + chartHeight + 25);
+    }
+
+    function drawRPMChart() {
+      const ctx = rpmCtx;
+      const canvas = ctx.canvas;
+      const w = canvas.width;
+      const h = canvas.height;
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, w, h);
+      
+      const margin = { top: 20, right: 40, bottom: 40, left: 60 };
+      const chartWidth = w - margin.left - margin.right;
+      const chartHeight = h - margin.top - margin.bottom;
+      
+      const yMin = 0;
+      const yMax = 4000;
+      const range = yMax - yMin;
+      
+      // Draw background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      
+      // Draw chart background
+      ctx.fillStyle = '#fafafa';
+      ctx.fillRect(margin.left, margin.top, chartWidth, chartHeight);
+      
+      // Draw grid lines
+      ctx.strokeStyle = '#e0e0e0';
+      ctx.lineWidth = 1;
+      
+      // Horizontal grid lines
+      for (let i = 0; i <= 5; i++) {
+        const y = margin.top + (chartHeight / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(margin.left, y);
+        ctx.lineTo(margin.left + chartWidth, y);
+        ctx.stroke();
+      }
+      
+      // Vertical grid lines
+      const verticalLines = 8;
+      for (let i = 0; i <= verticalLines; i++) {
+        const x = margin.left + (chartWidth / verticalLines) * i;
+        ctx.beginPath();
+        ctx.moveTo(x, margin.top);
+        ctx.lineTo(x, margin.top + chartHeight);
+        ctx.stroke();
+      }
+      
+      // Draw Y-axis labels
+      ctx.fillStyle = '#666';
+      ctx.font = '11px Arial';
+      ctx.textAlign = 'right';
+      
+      for (let i = 0; i <= 5; i++) {
+        const value = yMin + (range / 5) * (5 - i);
+        const y = margin.top + (chartHeight / 5) * i;
+        ctx.fillText(value.toFixed(0), margin.left - 10, y + 4);
+      }
+      
+      // Draw X-axis labels
+      ctx.textAlign = 'center';
+      ctx.fillText('02:27', margin.left + 20, margin.top + chartHeight + 25);
+      ctx.fillText('02:27', margin.left + chartWidth - 20, margin.top + chartHeight + 25);
+      
+      if (rpmIRData.length === 0 && rpmHallData.length === 0) {
+        return;
+      }
+      
+      // Draw RPM IR line
+      if (rpmIRData.length > 1) {
+        ctx.strokeStyle = '#dc3545';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        
+        for (let i = 0; i < rpmIRData.length; i++) {
+          const x = margin.left + (chartWidth / (rpmIRData.length - 1)) * i;
+          const y = margin.top + chartHeight - ((rpmIRData[i] - yMin) / range) * chartHeight;
+          
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.stroke();
+      }
+      
+      // Draw RPM Hall line
+      if (rpmHallData.length > 1) {
+        ctx.strokeStyle = '#007bff';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        
+        for (let i = 0; i < rpmHallData.length; i++) {
+          const x = margin.left + (chartWidth / (rpmHallData.length - 1)) * i;
+          const y = margin.top + chartHeight - ((rpmHallData[i] - yMin) / range) * chartHeight;
+          
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.stroke();
+      }
+    }
+
+    function updateCharts() {
+      drawChart(frequencyCtx, frequencyData, timeLabels, 'Grafik Frekuensi (Hz)', '#d02027', 0, 60);
+      drawRPMChart();
+    }
+
+    function addDataPoint(freq, rpmIR, rpmHall) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      
+      frequencyData.push(parseFloat(freq) || 0);
+      rpmIRData.push(parseFloat(rpmIR) || 0);
+      rpmHallData.push(parseFloat(rpmHall) || 0);
+      timeLabels.push(timeStr);
+      
+      if (frequencyData.length > maxDataPoints) {
+        frequencyData.shift();
+        rpmIRData.shift();
+        rpmHallData.shift();
+        timeLabels.shift();
+      }
+      
+      updateCharts();
+    }
+
+    // Connection status
+    let isConnected = false;
+    let lastUpdate = Date.now();
+
+    function updateConnectionStatus() {
+      const now = Date.now();
+      const timeSinceLastUpdate = now - lastUpdate;
+        
+      if (timeSinceLastUpdate > 10000) {
+        isConnected = false;
+        statusIndicator.className = 'status-indicator offline';
+        loading.style.display = 'none';
+      } else {
+        isConnected = true;
+        statusIndicator.className = 'status-indicator';
+        loading.style.display = 'none';
+      }
+    }
+
+    function startListening() {
+      loading.style.display = 'inline-block';
+      
+      const sensorRef = ref(database, 'sensor_data');
+      onValue(sensorRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          lastUpdate = Date.now();
+          
+          // Update metric values
+          frekuensiValue.textContent = data.frekuensi ? data.frekuensi.toFixed(2) : '-';
+          rpmTurbinValue.textContent = data.ir ? data.ir.toFixed(0) : '-';
+          rpmGeneratorValue.textContent = data.hall ? data.hall.toFixed(0) : '-';
+          
+          // Add to chart data
+          addDataPoint(data.frekuensi, data.ir, data.hall);
+          
+          updateConnectionStatus();
+        }
+      }, (error) => {
+        console.error('Firebase error:', error);
+        isConnected = false;
+        statusIndicator.className = 'status-indicator offline';
+        loading.style.display = 'none';
+      });
+    }
+
+    function init() {
+      const frequencyCanvas = document.getElementById('frequencyChart');
+      const rpmCanvas = document.getElementById('rpmChart');
+      
+      function resizeCanvases() {
+        frequencyCanvas.width = frequencyCanvas.offsetWidth;
+        frequencyCanvas.height = frequencyCanvas.offsetHeight;
+        rpmCanvas.width = rpmCanvas.offsetWidth;
+        rpmCanvas.height = rpmCanvas.offsetHeight;
+        updateCharts();
+      }
+      
+      resizeCanvases();
+      window.addEventListener('resize', resizeCanvases);
+      
+      startListening();
+      setInterval(updateConnectionStatus, 5000);
+      updateCharts();
+    }
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+
+</html>
