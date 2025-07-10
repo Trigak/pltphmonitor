@@ -425,17 +425,15 @@
     // Chart drawing functions
     function drawChart(ctx, data, labels, title, color, yMin = 0, yMax = null) {
       const canvas = ctx.canvas;
-      const width = canvas.width;
-      const height = canvas.height;
       
-      // Clear canvas
-      ctx.clearRect(0, 0, width, height);
-      
-      // Set canvas size
+      // Set canvas size first
       canvas.width = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
       const w = canvas.width;
       const h = canvas.height;
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, w, h);
       
       if (data.length === 0) {
         drawEmptyChart(ctx, w, h, yMin, yMax, title);
@@ -578,6 +576,10 @@
     function drawRPMChart() {
       const ctx = rpmCtx;
       const canvas = ctx.canvas;
+      
+      // Set canvas size first
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
       const w = canvas.width;
       const h = canvas.height;
       
@@ -761,19 +763,17 @@
       const rpmCanvas = document.getElementById('rpmChart');
       
       function resizeCanvases() {
-        frequencyCanvas.width = frequencyCanvas.offsetWidth;
-        frequencyCanvas.height = frequencyCanvas.offsetHeight;
-        rpmCanvas.width = rpmCanvas.offsetWidth;
-        rpmCanvas.height = rpmCanvas.offsetHeight;
+        // Don't resize canvas here, let the draw functions handle it
         updateCharts();
       }
       
-      resizeCanvases();
+      // Initial chart drawing
+      updateCharts();
+      
       window.addEventListener('resize', resizeCanvases);
       
       startListening();
       setInterval(updateConnectionStatus, 5000);
-      updateCharts();
     }
 
     window.addEventListener('load', init);
