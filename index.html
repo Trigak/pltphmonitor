@@ -334,27 +334,6 @@
       transform: translateY(0);
     }
 
-    /* Loading animation */
-    .loading {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid #f3f3f3;
-      border-top: 2px solid #d02027;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% {
-        transform: rotate(0deg);
-      }
-
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-
     /* Responsive */
     @media (max-width: 768px) {
       header {
@@ -584,56 +563,59 @@
     const CANVAS_HEIGHT = 300;
 
     // Google Apps Script Web App URL (ganti dengan URL Anda)
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrPzboFQmWjDSw_qIDsKrbZLl8CDLPbzkyiRe-7fDRgxDONXDm4G8fHWrdJqyKjBtwaw/exec';
 
     // Global function for logging toggle
-    window.toggleLogging = function() {
-      if (loggingRequestInProgress) return;
-      
-      loggingRequestInProgress = true;
-      loggingButton.classList.add('loading');
-      loggingIcon.textContent = '⏳';
-      loggingText.textContent = 'Memproses...';
-      
-      // Send request to Google Apps Script
-      const action = isLogging ? 'stop' : 'start';
-      
-      fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action: action })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          isLogging = !isLogging;
-          updateLoggingUI();
-        } else {
-          console.error('Logging toggle failed:', data.error);
-        }
-      })
-      .catch(error => {
-        console.error('Error toggling logging:', error);
-      })
-      .finally(() => {
-        loggingRequestInProgress = false;
-        loggingButton.classList.remove('loading');
-      });
-    };
+  window.toggleLogging = function() {
+  if (loggingRequestInProgress) return;
 
-    function updateLoggingUI() {
-      if (isLogging) {
-        loggingButton.classList.add('active');
-        loggingIcon.textContent = '⏹️';
-        loggingText.textContent = 'Stop Logging';
-      } else {
-        loggingButton.classList.remove('active');
-        loggingIcon.textContent = '📊';
-        loggingText.textContent = 'Mulai Logging';
-      }
+  loggingRequestInProgress = true;
+  loggingButton.classList.add('loading');
+  loggingIcon.textContent = '⏳';
+  loggingText.textContent = 'Memproses...';
+  
+  const action = isLogging ? 'deleteAllTriggers' : 'createAutomaticTrigger';
+  
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ action: action })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      isLogging = !isLogging;
+      updateLoggingUI();
+    } else {
+      console.error('Logging toggle failed:', data.error);
+      // Tampilkan error ke user
+      alert('Gagal mengubah status logging: ' + (data.error || 'Unknown error'));
     }
+  })
+  .catch(error => {
+    console.error('Error toggling logging:', error);
+    // Tampilkan error ke user
+    alert('Terjadi kesalahan saat menghubungi server: ' + error.message);
+  })
+  .finally(() => {
+    loggingRequestInProgress = false;
+    loggingButton.classList.remove('loading');
+  });
+};
+
+function updateLoggingUI() {
+  if (isLogging) {
+    loggingButton.classList.add('active');
+    loggingIcon.textContent = '⏹️';
+    loggingText.textContent = 'Stop Logging';
+  } else {
+    loggingButton.classList.remove('active');
+    loggingIcon.textContent = '📊';
+    loggingText.textContent = 'Mulai Logging';
+  }
+}
 
     // Initialize canvas sizes with fixed dimensions
     function initCanvasSizes() {
