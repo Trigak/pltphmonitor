@@ -202,6 +202,7 @@
       width: 100%;
       height: 100%;
       border-radius: 4px;
+      display: block;
     }
 
     .chart-legend {
@@ -422,15 +423,39 @@
     const frequencyCtx = document.getElementById('frequencyChart').getContext('2d');
     const rpmCtx = document.getElementById('rpmChart').getContext('2d');
 
+    // Canvas size variables
+    let canvasWidth = 0;
+    let canvasHeight = 0;
+
+    // Initialize canvas sizes
+    function initCanvasSizes() {
+      const frequencyCanvas = document.getElementById('frequencyChart');
+      const rpmCanvas = document.getElementById('rpmChart');
+      
+      // Set initial canvas sizes based on container
+      const containerWidth = frequencyCanvas.parentElement.offsetWidth;
+      const containerHeight = frequencyCanvas.parentElement.offsetHeight;
+      
+      canvasWidth = containerWidth;
+      canvasHeight = containerHeight;
+      
+      // Set canvas dimensions
+      frequencyCanvas.width = canvasWidth;
+      frequencyCanvas.height = canvasHeight;
+      rpmCanvas.width = canvasWidth;
+      rpmCanvas.height = canvasHeight;
+      
+      // Set CSS size to match
+      frequencyCanvas.style.width = canvasWidth + 'px';
+      frequencyCanvas.style.height = canvasHeight + 'px';
+      rpmCanvas.style.width = canvasWidth + 'px';
+      rpmCanvas.style.height = canvasHeight + 'px';
+    }
+
     // Chart drawing functions
     function drawChart(ctx, data, labels, title, color, yMin = 0, yMax = null) {
-      const canvas = ctx.canvas;
-      
-      // Set canvas size first
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-      const w = canvas.width;
-      const h = canvas.height;
+      const w = canvasWidth;
+      const h = canvasHeight;
       
       // Clear canvas
       ctx.clearRect(0, 0, w, h);
@@ -575,13 +600,8 @@
 
     function drawRPMChart() {
       const ctx = rpmCtx;
-      const canvas = ctx.canvas;
-      
-      // Set canvas size first
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-      const w = canvas.width;
-      const h = canvas.height;
+      const w = canvasWidth;
+      const h = canvasHeight;
       
       // Clear canvas
       ctx.clearRect(0, 0, w, h);
@@ -759,18 +779,20 @@
     }
 
     function init() {
-      const frequencyCanvas = document.getElementById('frequencyChart');
-      const rpmCanvas = document.getElementById('rpmChart');
-      
-      function resizeCanvases() {
-        // Don't resize canvas here, let the draw functions handle it
-        updateCharts();
-      }
+      // Initialize canvas sizes first
+      initCanvasSizes();
       
       // Initial chart drawing
       updateCharts();
       
-      window.addEventListener('resize', resizeCanvases);
+      // Handle resize
+      window.addEventListener('resize', () => {
+        // Update canvas sizes on resize
+        setTimeout(() => {
+          initCanvasSizes();
+          updateCharts();
+        }, 100);
+      });
       
       startListening();
       setInterval(updateConnectionStatus, 5000);
