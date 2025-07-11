@@ -121,30 +121,6 @@
       }
     }
 
-    .logging-status {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.8rem;
-      color: #666;
-    }
-
-    .logging-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #6c757d;
-    }
-
-    .logging-indicator.active {
-      background: #28a745;
-      animation: pulse 2s infinite;
-    }
-
-    .logging-indicator.error {
-      background: #dc3545;
-    }
-
     .status-text {
       display: flex;
       align-items: center;
@@ -447,10 +423,6 @@
           <span id="loggingIcon">📊</span>
           <span id="loggingText">Mulai Logging</span>
         </button>
-        <div class="logging-status">
-          <div class="logging-indicator" id="loggingIndicator"></div>
-          <span id="loggingStatus">Logging Off</span>
-        </div>
       </div>
 
       <!-- Connection Status -->
@@ -591,8 +563,6 @@
     const loggingButton = document.getElementById('loggingButton');
     const loggingIcon = document.getElementById('loggingIcon');
     const loggingText = document.getElementById('loggingText');
-    const loggingIndicator = document.getElementById('loggingIndicator');
-    const loggingStatus = document.getElementById('loggingStatus');
 
     // Logging state
     let isLogging = false;
@@ -615,6 +585,55 @@
 
     // Google Apps Script Web App URL (ganti dengan URL Anda)
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec';
+
+    // Global function for logging toggle
+    window.toggleLogging = function() {
+      if (loggingRequestInProgress) return;
+      
+      loggingRequestInProgress = true;
+      loggingButton.classList.add('loading');
+      loggingIcon.textContent = '⏳';
+      loggingText.textContent = 'Memproses...';
+      
+      // Send request to Google Apps Script
+      const action = isLogging ? 'stop' : 'start';
+      
+      fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: action })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          isLogging = !isLogging;
+          updateLoggingUI();
+        } else {
+          console.error('Logging toggle failed:', data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error toggling logging:', error);
+      })
+      .finally(() => {
+        loggingRequestInProgress = false;
+        loggingButton.classList.remove('loading');
+      });
+    };
+
+    function updateLoggingUI() {
+      if (isLogging) {
+        loggingButton.classList.add('active');
+        loggingIcon.textContent = '⏹️';
+        loggingText.textContent = 'Stop Logging';
+      } else {
+        loggingButton.classList.remove('active');
+        loggingIcon.textContent = '📊';
+        loggingText.textContent = 'Mulai Logging';
+      }
+    }
 
     // Initialize canvas sizes with fixed dimensions
     function initCanvasSizes() {
@@ -689,162 +708,6 @@
       
       for (let i = 0; i <= 5; i++) {
         const value = minVal + (range / 5) * (5 - i);
-        const y = margin.top + (chartHeight / 5) * i;
-        ctx.fillText(value.toFixed(0), margin.left - 10, y + 4);
-      }
-      
-      // Draw X-axis labels with better time formatting
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#666';
-      ctx.font = '11px Arial';
-      
-      if (timeLabels.length > 0) {
-        // Show first and last time labels
-        const firstTime = timeLabels[0] || '00:00';
-        const lastTime = timeLabels[timeLabels.length - 1] || '00:00';
-        
-        ctx.fillText(firstTime, margin.left + 20, margin.top + chartHeight + 20);
-        ctx.fillText(lastTime, margin.left + chartWidth - 20, margin.top + chartHeight + 20);
-        
-        // Add middle time if we have enough data
-        if (timeLabels.length > 2) {
-          const middleIndex = Math.floor(timeLabels.length / 2);
-          const middleTime = timeLabels[middleIndex];
-          ctx.fillText(middleTime, margin.left + chartWidth / 2, margin.top + chartHeight + 20);
-        }
-      }
-      
-      // Draw data line
-      if (data.length > 1) {
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-        
-        for (let i = 0; i < data.length; i++) {
-          const x = margin.left + (chartWidth / Math.max(data.length - 1, 1)) * i;
-          const y = margin.top + chartHeight - ((data[i] - minVal) / range) * chartHeight;
-          
-          if (i === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        }
-        ctx.stroke();
-      }
-    }
-    
-    function drawEmptyChart(ctx, w, h, yMin, yMax, title) {
-      const margin = { top: 20, right: 40, bottom: 60, left: 60 };
-      const chartWidth = w - margin.left - margin.right;
-      const chartHeight = h - margin.top - margin.bottom;
-      const range = yMax - yMin;
-      
-      // Draw background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, w, h);
-      
-      // Draw chart background
-      ctx.fillStyle = '#fafafa';
-      ctx.fillRect(margin.left, margin.top, chartWidth, chartHeight);
-      
-      // Draw grid lines
-      ctx.strokeStyle = '#e0e0e0';
-      ctx.lineWidth = 1;
-      
-      // Horizontal grid lines
-      for (let i = 0; i <= 5; i++) {
-        const y = margin.top + (chartHeight / 5) * i;
-        ctx.beginPath();
-        ctx.moveTo(margin.left, y);
-        ctx.lineTo(margin.left + chartWidth, y);
-        ctx.stroke();
-      }
-      
-      // Vertical grid lines
-      const verticalLines = 8;
-      for (let i = 0; i <= verticalLines; i++) {
-        const x = margin.left + (chartWidth / verticalLines) * i;
-        ctx.beginPath();
-        ctx.moveTo(x, margin.top);
-        ctx.lineTo(x, margin.top + chartHeight);
-        ctx.stroke();
-      }
-      
-      // Draw Y-axis labels
-      ctx.fillStyle = '#666';
-      ctx.font = '12px Arial';
-      ctx.textAlign = 'right';
-      
-      for (let i = 0; i <= 5; i++) {
-        const value = yMin + (range / 5) * (5 - i);
-        const y = margin.top + (chartHeight / 5) * i;
-        ctx.fillText(value.toFixed(0), margin.left - 10, y + 4);
-      }
-      
-      // Draw "No Data" message
-      ctx.fillStyle = '#999';
-      ctx.font = '14px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('Menunggu Data...', margin.left + chartWidth / 2, margin.top + chartHeight / 2);
-    }
-
-    function drawRPMChart() {
-      const ctx = rpmCtx;
-      const w = CANVAS_WIDTH;
-      const h = CANVAS_HEIGHT;
-      
-      // Clear canvas
-      ctx.clearRect(0, 0, w, h);
-      
-      const margin = { top: 20, right: 40, bottom: 60, left: 60 };
-      const chartWidth = w - margin.left - margin.right;
-      const chartHeight = h - margin.top - margin.bottom;
-      
-      const yMin = 0;
-      const yMax = 4000;
-      const range = yMax - yMin;
-      
-      // Draw background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, w, h);
-      
-      // Draw chart background
-      ctx.fillStyle = '#fafafa';
-      ctx.fillRect(margin.left, margin.top, chartWidth, chartHeight);
-      
-      // Draw grid lines
-      ctx.strokeStyle = '#e0e0e0';
-      ctx.lineWidth = 1;
-      
-      // Horizontal grid lines
-      for (let i = 0; i <= 5; i++) {
-        const y = margin.top + (chartHeight / 5) * i;
-        ctx.beginPath();
-        ctx.moveTo(margin.left, y);
-        ctx.lineTo(margin.left + chartWidth, y);
-        ctx.stroke();
-      }
-      
-      // Vertical grid lines
-      const verticalLines = 8;
-      for (let i = 0; i <= verticalLines; i++) {
-        const x = margin.left + (chartWidth / verticalLines) * i;
-        ctx.beginPath();
-        ctx.moveTo(x, margin.top);
-        ctx.lineTo(x, margin.top + chartHeight);
-        ctx.stroke();
-      }
-      
-      // Draw Y-axis labels
-      ctx.fillStyle = '#666';
-      ctx.font = '12px Arial';
-      ctx.textAlign = 'right';
-      
-      for (let i = 0; i <= 5; i++) {
-        const value = yMin + (range / 5) * (5 - i);
         const y = margin.top + (chartHeight / 5) * i;
         ctx.fillText(value.toFixed(0), margin.left - 10, y + 4);
       }
@@ -1122,7 +985,7 @@
     }
 
     function startListening() {
-      loading.style.display = 'inline-block';s
+      loading.style.display = 'inline-block';
       
       const sensorRef = ref(database, 'sensor_data');
       onValue(sensorRef, (snapshot) => {
