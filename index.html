@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PLTPH Monitor - Telkom University</title>
   <style>
-    /* Reset */
     * {
       box-sizing: border-box;
     }
@@ -385,6 +384,99 @@
       .chart-card {
         height: 400px;
       }
+
+      @media (max-width: 480px) {
+
+        /* Header */
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+          padding: 12px 20px;
+        }
+
+        .left-group,
+        .right-group {
+          flex-wrap: wrap;
+          justify-content: center;
+          width: 100%;
+        }
+
+        h1 {
+          font-size: 1.3rem;
+        }
+
+        /* Tombol Logging */
+        .logging-control {
+          justify-content: center;
+          width: 100%;
+          margin-bottom: 10px;
+        }
+
+        .status-text {
+          justify-content: center;
+          width: 100%;
+          display: flex;
+          margin-top: 10px;
+          text-align: center;
+          flex-wrap: wrap;
+        }
+
+        .status-text span {
+          width: 100%;
+        }
+
+        /* Kartu metrik */
+        .metric-card {
+          padding: 20px;
+        }
+
+        .metric-value {
+          font-size: 1.6rem;
+        }
+
+        /* Grafik */
+        .chart-card {
+          height: 360px;
+          padding: 18px;
+        }
+
+        .chart-title {
+          font-size: 1.05rem;
+        }
+
+        .chart-subtitle {
+          font-size: 0.8rem;
+        }
+
+        .chart-legend {
+          font-size: 0.75rem;
+          justify-content: center;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+
+        /* Tombol data */
+        .data-button {
+          padding: 12px;
+          font-size: 0.9rem;
+          border-radius: 8px;
+        }
+
+        /* Grid layout */
+        .metrics-container,
+        .charts-container,
+        .buttons-container {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        main {
+          padding: 24px 20px;
+          gap: 24px;
+        }
+      }
+
     }
   </style>
 </head>
@@ -618,16 +710,24 @@ function updateLoggingUI() {
 }
 
     // Initialize canvas sizes with fixed dimensions
-    function initCanvasSizes() {
-      const frequencyCanvas = document.getElementById('frequencyChart');
-      const rpmCanvas = document.getElementById('rpmChart');
-      
-      // Set fixed canvas dimensions
-      frequencyCanvas.width = CANVAS_WIDTH;
-      frequencyCanvas.height = CANVAS_HEIGHT;
-      rpmCanvas.width = CANVAS_WIDTH;
-      rpmCanvas.height = CANVAS_HEIGHT;
-    }
+  function initCanvasSizes() {
+    const ratio = window.devicePixelRatio || 1;
+    const frequencyCanvas = document.getElementById('frequencyChart');
+    const rpmCanvas = document.getElementById('rpmChart');
+
+    frequencyCanvas.width = CANVAS_WIDTH * ratio;
+    frequencyCanvas.height = CANVAS_HEIGHT * ratio;
+    frequencyCanvas.style.width = CANVAS_WIDTH + "px";
+    frequencyCanvas.style.height = CANVAS_HEIGHT + "px";
+
+    rpmCanvas.width = CANVAS_WIDTH * ratio;
+    rpmCanvas.height = CANVAS_HEIGHT * ratio;
+    rpmCanvas.style.width = CANVAS_WIDTH + "px";
+    rpmCanvas.style.height = CANVAS_HEIGHT + "px";
+
+    frequencyCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    rpmCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
 
     // Chart drawing functions
     function drawChart(ctx, data, labels, title, color, yMin = 0, yMax = null) {
