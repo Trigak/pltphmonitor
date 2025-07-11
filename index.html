@@ -257,11 +257,10 @@
       flex-grow: 1;
       position: relative;
       overflow-x: auto;
-      /* Tambahan: untuk mencegah keluar layar */
       min-height: 200px;
-      /* Boleh lebih kecil agar fleksibel */
       height: auto;
       max-height: none;
+      padding-bottom: 12px;
     }
 
     .chart-canvas {
@@ -270,8 +269,8 @@
       height: auto !important;
       border-radius: 4px;
       max-width: 100%;
+      aspect-ratio: 2 / 1;
     }
-
 
     .chart-legend {
       display: flex;
@@ -559,6 +558,12 @@
         </div>
         <div class="chart-container">
           <canvas id="frequencyChart" class="chart-canvas"></canvas>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <div class="legend-color" style="background: #800080;"></div>
+              <span>Frekuensi (Hz)</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -671,29 +676,34 @@
   
   const action = isLogging ? 'deleteAllTriggers' : 'createAutomaticTrigger';
   
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ action: action })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
+fetch(APPS_SCRIPT_URL, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ action: action })
+})
+.then(async response => {
+  const text = await response.text(); // Ambil teks mentah
+  console.log("🔥 Raw response dari server:", text); // <-- Ini akan tampil di browser console
+
+  try {
+    const json = JSON.parse(text); // Coba parse JSON
+    if (json.success) {
       isLogging = !isLogging;
       updateLoggingUI();
     } else {
-      console.error('Logging toggle failed:', data.error);
-      // Tampilkan error ke user
-      alert('Gagal mengubah status logging: ' + (data.error || 'Unknown error'));
+      alert('Gagal mengubah status logging: ' + (json.error || 'Unknown error'));
     }
-  })
-  .catch(error => {
-    console.error('Error toggling logging:', error);
-    // Tampilkan error ke user
-    alert('Terjadi kesalahan saat menghubungi server: ' + error.message);
-  })
+  } catch (e) {
+    alert('⚠️ Balasan dari server bukan JSON:\n' + text); // Tampilkan HTML atau error lain
+  }
+})
+.catch(error => {
+  console.error('Error toggling logging:', error);
+  alert('Terjadi kesalahan saat menghubungi server: ' + error.message);
+})
+
   .finally(() => {
     loggingRequestInProgress = false;
     loggingButton.classList.remove('loading');
@@ -751,7 +761,7 @@ function initCanvasSizes() {
       }
       
       // Chart margins
-      const margin = { top: 20, right: 40, bottom: 60, left: 60 };
+      const margin = { top: 10, right: 30, bottom: 40, left: 50 };
       const chartWidth = w - margin.left - margin.right;
       const chartHeight = h - margin.top - margin.bottom;
       
@@ -846,7 +856,7 @@ function initCanvasSizes() {
     }
     
     function drawEmptyChart(ctx, w, h, yMin, yMax, title) {
-      const margin = { top: 20, right: 40, bottom: 60, left: 60 };
+      const margin = { top: 10, right: 30, bottom: 40, left: 50 };
       const chartWidth = w - margin.left - margin.right;
       const chartHeight = h - margin.top - margin.bottom;
       const range = yMax - yMin;
@@ -908,7 +918,7 @@ function initCanvasSizes() {
       // Clear canvas
       ctx.clearRect(0, 0, w, h);
       
-      const margin = { top: 20, right: 40, bottom: 60, left: 60 };
+      const margin = { top: 10, right: 30, bottom: 40, left: 50 };
       const chartWidth = w - margin.left - margin.right;
       const chartHeight = h - margin.top - margin.bottom;
       
@@ -1032,7 +1042,7 @@ function initCanvasSizes() {
     }
 
     function updateCharts() {
-      drawChart(frequencyCtx, frequencyData, timeLabels, 'Grafik Frekuensi (Hz)', '#d02027', 0, 60);
+      drawChart(frequencyCtx, frequencyData, timeLabels, 'Grafik Frekuensi (Hz)', '#800080', 0, 60);
       drawRPMChart();
     }
 
