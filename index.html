@@ -172,11 +172,13 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       display: flex;
       flex-direction: column;
-      min-height: 400px;
+      height: 450px;
+      /* Fixed height to prevent expansion */
     }
 
     .chart-header {
       margin-bottom: 16px;
+      flex-shrink: 0;
     }
 
     .chart-title {
@@ -195,7 +197,9 @@
     .chart-container {
       flex-grow: 1;
       position: relative;
-      min-height: 320px;
+      min-height: 300px;
+      max-height: 350px;
+      /* Prevent excessive height */
     }
 
     .chart-canvas {
@@ -203,6 +207,8 @@
       height: 100%;
       border-radius: 4px;
       display: block;
+      max-width: 100%;
+      max-height: 100%;
     }
 
     .chart-legend {
@@ -211,6 +217,7 @@
       gap: 20px;
       margin-top: 12px;
       font-size: 0.8rem;
+      flex-shrink: 0;
     }
 
     .legend-item {
@@ -231,6 +238,40 @@
 
     .legend-color.generator {
       background: #007bff;
+    }
+
+    /* Buttons container */
+    .buttons-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .data-button {
+      background: white;
+      border: 2px solid #d02027;
+      color: #d02027;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      text-align: center;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    .data-button:hover {
+      background: #d02027;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(208, 32, 39, 0.3);
+    }
+
+    .data-button:active {
+      transform: translateY(0);
     }
 
     /* Loading animation */
@@ -281,12 +322,20 @@
         grid-template-columns: 1fr;
       }
 
+      .buttons-container {
+        grid-template-columns: 1fr;
+      }
+
       .metric-card {
         padding: 20px;
       }
 
       .metric-value {
         font-size: 1.8rem;
+      }
+
+      .chart-card {
+        height: 400px;
       }
     }
   </style>
@@ -381,6 +430,26 @@
         </div>
       </div>
     </section>
+
+    <!-- Data Access Buttons -->
+    <section class="buttons-container">
+      <a href="https://docs.google.com/spreadsheets/d/1Ykq4_w3bGwAF5IVFDGWq3klyA2CSNMOsJiQBOWbtsWw/edit?gid=0#gid=0"
+        target="_blank" class="data-button">
+        📊 Data Sensor IR
+      </a>
+      <a href="https://docs.google.com/spreadsheets/d/1AGu5WmM4OLCp4QL392NuJ-IWES1Nxe4yVEzw5Z3QPQI/edit?gid=0#gid=0"
+        target="_blank" class="data-button">
+        📊 Data Sensor Hall
+      </a>
+      <a href="https://docs.google.com/spreadsheets/d/1k2zT-FPM32p0nXlukdxaSDr0fLdXRIKO7L8hYNMriHU/edit?gid=0#gid=0"
+        target="_blank" class="data-button">
+        📊 Data Frekuensi
+      </a>
+      <a href="https://docs.google.com/spreadsheets/d/1SKioiWIGg78mIahyAOdEXxmkKa624-Onzf8sEKhn8V8/edit?gid=0#gid=0"
+        target="_blank" class="data-button">
+        📊 Data Perbandingan
+      </a>
+    </section>
   </main>
 
   <!-- Firebase SDK -->
@@ -423,39 +492,26 @@
     const frequencyCtx = document.getElementById('frequencyChart').getContext('2d');
     const rpmCtx = document.getElementById('rpmChart').getContext('2d');
 
-    // Canvas size variables
-    let canvasWidth = 0;
-    let canvasHeight = 0;
+    // Fixed canvas dimensions
+    const CANVAS_WIDTH = 800;
+    const CANVAS_HEIGHT = 300;
 
-    // Initialize canvas sizes
+    // Initialize canvas sizes with fixed dimensions
     function initCanvasSizes() {
       const frequencyCanvas = document.getElementById('frequencyChart');
       const rpmCanvas = document.getElementById('rpmChart');
       
-      // Set initial canvas sizes based on container
-      const containerWidth = frequencyCanvas.parentElement.offsetWidth;
-      const containerHeight = frequencyCanvas.parentElement.offsetHeight;
-      
-      canvasWidth = containerWidth;
-      canvasHeight = containerHeight;
-      
-      // Set canvas dimensions
-      frequencyCanvas.width = canvasWidth;
-      frequencyCanvas.height = canvasHeight;
-      rpmCanvas.width = canvasWidth;
-      rpmCanvas.height = canvasHeight;
-      
-      // Set CSS size to match
-      frequencyCanvas.style.width = canvasWidth + 'px';
-      frequencyCanvas.style.height = canvasHeight + 'px';
-      rpmCanvas.style.width = canvasWidth + 'px';
-      rpmCanvas.style.height = canvasHeight + 'px';
+      // Set fixed canvas dimensions
+      frequencyCanvas.width = CANVAS_WIDTH;
+      frequencyCanvas.height = CANVAS_HEIGHT;
+      rpmCanvas.width = CANVAS_WIDTH;
+      rpmCanvas.height = CANVAS_HEIGHT;
     }
 
     // Chart drawing functions
     function drawChart(ctx, data, labels, title, color, yMin = 0, yMax = null) {
-      const w = canvasWidth;
-      const h = canvasHeight;
+      const w = CANVAS_WIDTH;
+      const h = CANVAS_HEIGHT;
       
       // Clear canvas
       ctx.clearRect(0, 0, w, h);
@@ -466,7 +522,7 @@
       }
       
       // Chart margins
-      const margin = { top: 20, right: 40, bottom: 40, left: 60 };
+      const margin = { top: 20, right: 40, bottom: 60, left: 60 };
       const chartWidth = w - margin.left - margin.right;
       const chartHeight = h - margin.top - margin.bottom;
       
@@ -508,7 +564,7 @@
       
       // Draw Y-axis labels
       ctx.fillStyle = '#666';
-      ctx.font = '11px Arial';
+      ctx.font = '12px Arial';
       ctx.textAlign = 'right';
       
       for (let i = 0; i <= 5; i++) {
@@ -517,10 +573,26 @@
         ctx.fillText(value.toFixed(0), margin.left - 10, y + 4);
       }
       
-      // Draw X-axis labels (simplified)
+      // Draw X-axis labels with better time formatting
       ctx.textAlign = 'center';
-      ctx.fillText('02:27', margin.left + 20, margin.top + chartHeight + 25);
-      ctx.fillText('02:27', margin.left + chartWidth - 20, margin.top + chartHeight + 25);
+      ctx.fillStyle = '#666';
+      ctx.font = '11px Arial';
+      
+      if (timeLabels.length > 0) {
+        // Show first and last time labels
+        const firstTime = timeLabels[0] || '00:00';
+        const lastTime = timeLabels[timeLabels.length - 1] || '00:00';
+        
+        ctx.fillText(firstTime, margin.left + 20, margin.top + chartHeight + 20);
+        ctx.fillText(lastTime, margin.left + chartWidth - 20, margin.top + chartHeight + 20);
+        
+        // Add middle time if we have enough data
+        if (timeLabels.length > 2) {
+          const middleIndex = Math.floor(timeLabels.length / 2);
+          const middleTime = timeLabels[middleIndex];
+          ctx.fillText(middleTime, margin.left + chartWidth / 2, margin.top + chartHeight + 20);
+        }
+      }
       
       // Draw data line
       if (data.length > 1) {
@@ -531,7 +603,7 @@
         ctx.beginPath();
         
         for (let i = 0; i < data.length; i++) {
-          const x = margin.left + (chartWidth / (data.length - 1)) * i;
+          const x = margin.left + (chartWidth / Math.max(data.length - 1, 1)) * i;
           const y = margin.top + chartHeight - ((data[i] - minVal) / range) * chartHeight;
           
           if (i === 0) {
@@ -545,7 +617,7 @@
     }
     
     function drawEmptyChart(ctx, w, h, yMin, yMax, title) {
-      const margin = { top: 20, right: 40, bottom: 40, left: 60 };
+      const margin = { top: 20, right: 40, bottom: 60, left: 60 };
       const chartWidth = w - margin.left - margin.right;
       const chartHeight = h - margin.top - margin.bottom;
       const range = yMax - yMin;
@@ -583,7 +655,7 @@
       
       // Draw Y-axis labels
       ctx.fillStyle = '#666';
-      ctx.font = '11px Arial';
+      ctx.font = '12px Arial';
       ctx.textAlign = 'right';
       
       for (let i = 0; i <= 5; i++) {
@@ -592,21 +664,22 @@
         ctx.fillText(value.toFixed(0), margin.left - 10, y + 4);
       }
       
-      // Draw X-axis labels
+      // Draw "No Data" message
+      ctx.fillStyle = '#999';
+      ctx.font = '14px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText('02:27', margin.left + 20, margin.top + chartHeight + 25);
-      ctx.fillText('02:27', margin.left + chartWidth - 20, margin.top + chartHeight + 25);
+      ctx.fillText('Menunggu Data...', margin.left + chartWidth / 2, margin.top + chartHeight / 2);
     }
 
     function drawRPMChart() {
       const ctx = rpmCtx;
-      const w = canvasWidth;
-      const h = canvasHeight;
+      const w = CANVAS_WIDTH;
+      const h = CANVAS_HEIGHT;
       
       // Clear canvas
       ctx.clearRect(0, 0, w, h);
       
-      const margin = { top: 20, right: 40, bottom: 40, left: 60 };
+      const margin = { top: 20, right: 40, bottom: 60, left: 60 };
       const chartWidth = w - margin.left - margin.right;
       const chartHeight = h - margin.top - margin.bottom;
       
@@ -647,7 +720,7 @@
       
       // Draw Y-axis labels
       ctx.fillStyle = '#666';
-      ctx.font = '11px Arial';
+      ctx.font = '12px Arial';
       ctx.textAlign = 'right';
       
       for (let i = 0; i <= 5; i++) {
@@ -656,12 +729,33 @@
         ctx.fillText(value.toFixed(0), margin.left - 10, y + 4);
       }
       
-      // Draw X-axis labels
+      // Draw X-axis labels with better time formatting
       ctx.textAlign = 'center';
-      ctx.fillText('02:27', margin.left + 20, margin.top + chartHeight + 25);
-      ctx.fillText('02:27', margin.left + chartWidth - 20, margin.top + chartHeight + 25);
+      ctx.fillStyle = '#666';
+      ctx.font = '11px Arial';
+      
+      if (timeLabels.length > 0) {
+        // Show first and last time labels
+        const firstTime = timeLabels[0] || '00:00';
+        const lastTime = timeLabels[timeLabels.length - 1] || '00:00';
+        
+        ctx.fillText(firstTime, margin.left + 20, margin.top + chartHeight + 20);
+        ctx.fillText(lastTime, margin.left + chartWidth - 20, margin.top + chartHeight + 20);
+        
+        // Add middle time if we have enough data
+        if (timeLabels.length > 2) {
+          const middleIndex = Math.floor(timeLabels.length / 2);
+          const middleTime = timeLabels[middleIndex];
+          ctx.fillText(middleTime, margin.left + chartWidth / 2, margin.top + chartHeight + 20);
+        }
+      }
       
       if (rpmIRData.length === 0 && rpmHallData.length === 0) {
+        // Draw "No Data" message
+        ctx.fillStyle = '#999';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Menunggu Data...', margin.left + chartWidth / 2, margin.top + chartHeight / 2);
         return;
       }
       
@@ -674,7 +768,7 @@
         ctx.beginPath();
         
         for (let i = 0; i < rpmIRData.length; i++) {
-          const x = margin.left + (chartWidth / (rpmIRData.length - 1)) * i;
+          const x = margin.left + (chartWidth / Math.max(rpmIRData.length - 1, 1)) * i;
           const y = margin.top + chartHeight - ((rpmIRData[i] - yMin) / range) * chartHeight;
           
           if (i === 0) {
@@ -695,7 +789,7 @@
         ctx.beginPath();
         
         for (let i = 0; i < rpmHallData.length; i++) {
-          const x = margin.left + (chartWidth / (rpmHallData.length - 1)) * i;
+          const x = margin.left + (chartWidth / Math.max(rpmHallData.length - 1, 1)) * i;
           const y = margin.top + chartHeight - ((rpmHallData[i] - yMin) / range) * chartHeight;
           
           if (i === 0) {
@@ -715,7 +809,7 @@
 
     function addDataPoint(freq, rpmIR, rpmHall) {
       const now = new Date();
-      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       
       frequencyData.push(parseFloat(freq) || 0);
       rpmIRData.push(parseFloat(rpmIR) || 0);
