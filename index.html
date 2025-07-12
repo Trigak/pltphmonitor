@@ -663,9 +663,13 @@
     const CANVAS_HEIGHT = 300;
 
     // Google Apps Script Web App URL
-    const APPS_SCRIPT_URL = 'https://pltphmon.gakprojek.workers.dev/';
+  //  const APPS_SCRIPT_URL = 'https://pltphmon.gakprojek.workers.dev/';//
 
-    // Global function for logging toggle
+// Bagian JavaScript yang perlu diperbaiki di HTML (ganti bagian logging)
+
+// Google Apps Script Web App URL - GANTI DENGAN URL APPS SCRIPT ANDA
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+
 // Global function for logging toggle
 let logIntervalId = null;
 
@@ -680,7 +684,7 @@ window.toggleLogging = function () {
   const nextState = !isLogging;
 
   if (nextState) {
-    // Mulai logging - eksekusi pertama kali langsung
+    // Mulai logging
     fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -688,11 +692,13 @@ window.toggleLogging = function () {
     })
     .then(res => res.json())
     .then(data => {
+      console.log('Start logging response:', data);
+      
       if (data.success) {
         isLogging = true;
         updateLoggingUI();
         
-        // Set interval untuk logging otomatis setiap 5 detik
+        // Set interval untuk logging otomatis setiap 30 detik (karena GAS trigger minimum 1 menit)
         logIntervalId = setInterval(() => {
           fetch(APPS_SCRIPT_URL, {
             method: 'POST',
@@ -708,9 +714,14 @@ window.toggleLogging = function () {
             }
           })
           .catch(err => console.error("❌ Error log otomatis:", err));
-        }, 5000);
+        }, 30000); // 30 detik
         
-        console.log("✅ Logging dimulai, akan mengeksekusi setiap 5 detik");
+        console.log("✅ Logging dimulai, akan mengeksekusi setiap 30 detik");
+        
+        // Tampilkan informasi pertama kali
+        if (data.firstRun) {
+          console.log("📊 First run result:", data.firstRun);
+        }
       } else {
         throw new Error(data.error || 'Gagal memulai logging');
       }
@@ -732,6 +743,8 @@ window.toggleLogging = function () {
     })
     .then(res => res.json())
     .then(data => {
+      console.log('Stop logging response:', data);
+      
       isLogging = false;
       updateLoggingUI();
       
@@ -764,6 +777,40 @@ function updateLoggingUI() {
     loggingIcon.textContent = '📊';
     loggingText.textContent = 'Mulai Logging';
   }
+}
+
+// Fungsi untuk mengecek status trigger (optional, untuk debugging)
+function checkTriggerStatus() {
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ action: 'getTriggerStatus' }).toString()
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log('Trigger status:', data);
+  })
+  .catch(error => {
+    console.error('Error checking trigger status:', error);
+  });
+}
+
+// Fungsi untuk test manual logging
+function testManualLogging() {
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ action: 'executeLogging' }).toString()
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log('Manual logging result:', data);
+    alert('Manual logging: ' + (data.success ? 'Berhasil' : 'Gagal - ' + data.error));
+  })
+  .catch(error => {
+    console.error('Error manual logging:', error);
+    alert('Error: ' + error.message);
+  });
 }
 
     // Initialize canvas sizes with fixed dimensions
