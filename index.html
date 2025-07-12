@@ -666,6 +666,7 @@
     const APPS_SCRIPT_URL = 'https://pltphmon.gakprojek.workers.dev/';
 
     // Global function for logging toggle
+// Global function for logging toggle
 let logIntervalId = null;
 
 window.toggleLogging = function () {
@@ -678,46 +679,79 @@ window.toggleLogging = function () {
 
   const nextState = !isLogging;
 
-  // Lakukan log pertama kali langsung
-fetch(APPS_SCRIPT_URL, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  body: new URLSearchParams({ action: 'logOnceNow' }).toString()
-})
-
-    .then(res => res.text())
-    .then(text => {
-      console.log("📌 Log pertama berhasil:", text);
-
-      isLogging = nextState;
-      updateLoggingUI();
-
-      if (isLogging) {
+  if (nextState) {
+    // Mulai logging - eksekusi pertama kali langsung
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ action: 'startLogging' }).toString()
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        isLogging = true;
+        updateLoggingUI();
+        
+        // Set interval untuk logging otomatis setiap 5 detik
         logIntervalId = setInterval(() => {
           fetch(APPS_SCRIPT_URL, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  body: new URLSearchParams({ action: 'logOnceNow' }).toString()
-})
-
-            .then(r => r.text())
-            .then(t => console.log("📥 Log otomatis:", t))
-            .catch(err => console.error("❌ Gagal log otomatis:", err));
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action: 'executeLogging' }).toString()
+          })
+          .then(r => r.json())
+          .then(result => {
+            if (result.success) {
+              console.log("📥 Log otomatis berhasil:", result.message);
+            } else {
+              console.error("❌ Log otomatis gagal:", result.error);
+            }
+          })
+          .catch(err => console.error("❌ Error log otomatis:", err));
         }, 5000);
+        
+        console.log("✅ Logging dimulai, akan mengeksekusi setiap 5 detik");
       } else {
-        clearInterval(logIntervalId);
-        logIntervalId = null;
-        console.log("⏹️ Logging otomatis dihentikan");
+        throw new Error(data.error || 'Gagal memulai logging');
       }
     })
     .catch(error => {
-      alert('❌ Error saat log data pertama: ' + error.message);
+      alert('❌ Error saat memulai logging: ' + error.message);
       console.error(error);
     })
     .finally(() => {
       loggingRequestInProgress = false;
       loggingButton.classList.remove('loading');
     });
+  } else {
+    // Stop logging
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ action: 'stopLogging' }).toString()
+    })
+    .then(res => res.json())
+    .then(data => {
+      isLogging = false;
+      updateLoggingUI();
+      
+      // Hentikan interval
+      if (logIntervalId) {
+        clearInterval(logIntervalId);
+        logIntervalId = null;
+      }
+      
+      console.log("⏹️ Logging dihentikan");
+    })
+    .catch(error => {
+      alert('❌ Error saat menghentikan logging: ' + error.message);
+      console.error(error);
+    })
+    .finally(() => {
+      loggingRequestInProgress = false;
+      loggingButton.classList.remove('loading');
+    });
+  }
 };
 
 function updateLoggingUI() {
