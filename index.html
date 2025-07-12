@@ -666,7 +666,7 @@
     const APPS_SCRIPT_URL = 'https://pltphmon.gakprojek.workers.dev/';
 
     // Global function for logging toggle
-let logIntervalId = null; // Untuk menyimpan setInterval
+let logIntervalId = null;
 
 window.toggleLogging = function () {
   if (loggingRequestInProgress) return;
@@ -691,7 +691,6 @@ window.toggleLogging = function () {
       isLogging = nextState;
       updateLoggingUI();
 
-      // Mulai atau hentikan interval 5 detik
       if (isLogging) {
         logIntervalId = setInterval(() => {
           fetch(APPS_SCRIPT_URL, {
@@ -702,7 +701,7 @@ window.toggleLogging = function () {
             .then(r => r.text())
             .then(t => console.log("📥 Log otomatis:", t))
             .catch(err => console.error("❌ Gagal log otomatis:", err));
-        }, 5000); // 5000 ms = 5 detik
+        }, 5000);
       } else {
         clearInterval(logIntervalId);
         logIntervalId = null;
@@ -717,17 +716,6 @@ window.toggleLogging = function () {
       loggingRequestInProgress = false;
       loggingButton.classList.remove('loading');
     });
-};
-
-.catch(error => {
-  console.error('Error toggling logging:', error);
-  alert('Terjadi kesalahan saat menghubungi server: ' + error.message);
-})
-
-  .finally(() => {
-    loggingRequestInProgress = false;
-    loggingButton.classList.remove('loading');
-  });
 };
 
 function updateLoggingUI() {
