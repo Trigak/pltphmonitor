@@ -231,8 +231,8 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       display: flex;
       flex-direction: column;
-      min-height: 300px;
-      height: auto;
+      height: 450px;
+      /* Fixed height to prevent expansion */
     }
 
     .chart-header {
@@ -257,9 +257,6 @@
       flex-grow: 1;
       position: relative;
       overflow: hidden;
-      overflow-x: auto;
-      overflow-y: hidden;
-      width: 100%;
       min-height: 200px;
       height: auto;
       max-height: none;
@@ -447,15 +444,8 @@
 
         /* Grafik */
         .chart-card {
-          min-height: 280px;
-          height: auto;
+          height: 350px;
           padding: 16px;
-        }
-
-        canvas {
-          width: 100% !important;
-          height: auto !important;
-          display: block;
         }
 
         .chart-container {
@@ -781,27 +771,36 @@
     }
 
     // Initialize canvas sizes with responsive dimensions
-function initCanvasSizes() {
-  const ratio = window.devicePixelRatio || 1;
-  const frequencyCanvas = document.getElementById('frequencyChart');
-  const rpmCanvas = document.getElementById('rpmChart');
+    function initCanvasSizes() {
+      const ratio = window.devicePixelRatio || 1;
+      const frequencyCanvas = document.getElementById('frequencyChart');
+      const rpmCanvas = document.getElementById('rpmChart');
 
-  const containerWidth = frequencyCanvas.parentElement.offsetWidth;
-  const canvasHeight = Math.max(containerWidth * 0.6, 220);
-  frequencyCanvas.width = containerWidth * ratio;
-  frequencyCanvas.height = canvasHeight * ratio;
-  frequencyCanvas.style.width = containerWidth + "px";
-  frequencyCanvas.style.height = canvasHeight + "px";
+      // Get actual container dimensions
+      const freqContainer = frequencyCanvas.parentElement;
+      const rpmContainer = rpmCanvas.parentElement;
+      
+      const freqContainerWidth = freqContainer.offsetWidth;
+      const freqContainerHeight = freqContainer.offsetHeight;
+      
+      const rpmContainerWidth = rpmContainer.offsetWidth;
+      const rpmContainerHeight = rpmContainer.offsetHeight;
 
-  rpmCanvas.width = containerWidth * ratio;
-  rpmCanvas.height = canvasHeight * ratio;
-  rpmCanvas.style.width = containerWidth + "px";
-  rpmCanvas.style.height = canvasHeight + "px";
+      // Set canvas dimensions to match container
+      frequencyCanvas.width = freqContainerWidth * ratio;
+      frequencyCanvas.height = freqContainerHeight * ratio;
+      frequencyCanvas.style.width = freqContainerWidth + "px";
+      frequencyCanvas.style.height = freqContainerHeight + "px";
 
-  frequencyCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  rpmCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-}
+      rpmCanvas.width = rpmContainerWidth * ratio;
+      rpmCanvas.height = rpmContainerHeight * ratio;
+      rpmCanvas.style.width = rpmContainerWidth + "px";
+      rpmCanvas.style.height = rpmContainerHeight + "px";
 
+      // Scale context to match device pixel ratio
+      frequencyCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      rpmCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
 
     // Chart drawing functions
     function drawChart(ctx, data, labels, title, color, yMin = 0, yMax = null) {
@@ -1172,41 +1171,25 @@ function initCanvasSizes() {
       });
     }
 
-function init() {
-  // Initialize canvas sizes first
-  initCanvasSizes();
-
-  // Initial chart drawing
-  updateCharts();
-
-  // Handle resize
-  window.addEventListener('resize', () => {
-    setTimeout(() => {
+    function init() {
+      // Initialize canvas sizes first
       initCanvasSizes();
+      
+      // Initial chart drawing
       updateCharts();
-    }, 100);
-  });
-
-  // Tambahan: redrawing saat orientasi berubah (HP rotasi)
-  window.addEventListener('orientationchange', () => {
-    setTimeout(() => {
-      initCanvasSizes();
-      updateCharts();
-    }, 300);
-  });
-
-  // Tambahan: handle zoom/keyboard/viewport perubahan di mobile
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', () => {
-      initCanvasSizes();
-      updateCharts();
-    });
-  }
-
-  startListening();
-  setInterval(updateConnectionStatus, 5000);
-}
-
+      
+      // Handle resize
+      window.addEventListener('resize', () => {
+        // Update canvas sizes on resize
+        setTimeout(() => {
+          initCanvasSizes();
+          updateCharts();
+        }, 100);
+      });
+      
+      startListening();
+      setInterval(updateConnectionStatus, 5000);
+    }
 
     window.addEventListener('load', init);
   </script>
