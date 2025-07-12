@@ -679,11 +679,12 @@ window.toggleLogging = function () {
   const nextState = !isLogging;
 
   // Lakukan log pertama kali langsung
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'logOnceNow' })
-  })
+fetch(APPS_SCRIPT_URL, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: new URLSearchParams({ action: 'logOnceNow' }).toString()
+})
+
     .then(res => res.text())
     .then(text => {
       console.log("📌 Log pertama berhasil:", text);
@@ -694,10 +695,11 @@ window.toggleLogging = function () {
       if (isLogging) {
         logIntervalId = setInterval(() => {
           fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'logOnceNow' })
-          })
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: new URLSearchParams({ action: 'logOnceNow' }).toString()
+})
+
             .then(r => r.text())
             .then(t => console.log("📥 Log otomatis:", t))
             .catch(err => console.error("❌ Gagal log otomatis:", err));
