@@ -256,7 +256,7 @@
     .chart-container {
       flex-grow: 1;
       position: relative;
-      overflow: hidden;
+      overflow-x: auto;
       min-height: 200px;
       height: auto;
       max-height: none;
@@ -266,9 +266,10 @@
     .chart-canvas {
       display: block;
       width: 100% !important;
-      height: 100% !important;
+      height: auto !important;
       border-radius: 4px;
       max-width: 100%;
+      aspect-ratio: 2 / 1;
     }
 
     .chart-legend {
@@ -386,12 +387,6 @@
         height: 400px;
       }
 
-      .chart-legend {
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 15px;
-      }
-
       @media (max-width: 480px) {
 
         /* Header */
@@ -444,12 +439,8 @@
 
         /* Grafik */
         .chart-card {
-          height: 350px;
-          padding: 16px;
-        }
-
-        .chart-container {
-          min-height: 180px;
+          height: 360px;
+          padding: 18px;
         }
 
         .chart-title {
@@ -667,146 +658,143 @@
     const frequencyCtx = document.getElementById('frequencyChart').getContext('2d');
     const rpmCtx = document.getElementById('rpmChart').getContext('2d');
 
+    // Fixed canvas dimensions
+    const CANVAS_WIDTH = 800;
+    const CANVAS_HEIGHT = 300;
+
     // Google Apps Script Web App URL
     const APPS_SCRIPT_URL = 'https://pltphmon.gakprojek.workers.dev/';
 
     // Global function for logging toggle
-    let logIntervalId = null;
+// Global function for logging toggle
+let logIntervalId = null;
 
-    window.toggleLogging = function () {
-      if (loggingRequestInProgress) return;
+window.toggleLogging = function () {
+  if (loggingRequestInProgress) return;
 
-      loggingRequestInProgress = true;
-      loggingButton.classList.add('loading');
-      loggingIcon.textContent = '⏳';
-      loggingText.textContent = 'Memproses...';
+  loggingRequestInProgress = true;
+  loggingButton.classList.add('loading');
+  loggingIcon.textContent = '⏳';
+  loggingText.textContent = 'Memproses...';
 
-      const nextState = !isLogging;
+  const nextState = !isLogging;
 
-      if (nextState) {
-        // Mulai logging - eksekusi pertama kali langsung
-        fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ action: 'startLogging' }).toString()
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            isLogging = true;
-            updateLoggingUI();
-            
-            // Set interval untuk logging otomatis setiap 5 detik
-            logIntervalId = setInterval(() => {
-              fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ action: 'executeLogging' }).toString()
-              })
-              .then(r => r.json())
-              .then(result => {
-                if (result.success) {
-                  console.log("📥 Log otomatis berhasil:", result.message);
-                } else {
-                  console.error("❌ Log otomatis gagal:", result.error);
-                }
-              })
-              .catch(err => console.error("❌ Error log otomatis:", err));
-            }, 5000);
-            
-            console.log("✅ Logging dimulai, akan mengeksekusi setiap 5 detik");
-          } else {
-            throw new Error(data.error || 'Gagal memulai logging');
-          }
-        })
-        .catch(error => {
-          alert('❌ Error saat memulai logging: ' + error.message);
-          console.error(error);
-        })
-        .finally(() => {
-          loggingRequestInProgress = false;
-          loggingButton.classList.remove('loading');
-        });
+  if (nextState) {
+    // Mulai logging - eksekusi pertama kali langsung
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ action: 'startLogging' }).toString()
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        isLogging = true;
+        updateLoggingUI();
+        
+        // Set interval untuk logging otomatis setiap 5 detik
+        logIntervalId = setInterval(() => {
+          fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action: 'executeLogging' }).toString()
+          })
+          .then(r => r.json())
+          .then(result => {
+            if (result.success) {
+              console.log("📥 Log otomatis berhasil:", result.message);
+            } else {
+              console.error("❌ Log otomatis gagal:", result.error);
+            }
+          })
+          .catch(err => console.error("❌ Error log otomatis:", err));
+        }, 5000);
+        
+        console.log("✅ Logging dimulai, akan mengeksekusi setiap 5 detik");
       } else {
-        // Stop logging
-        fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ action: 'stopLogging' }).toString()
-        })
-        .then(res => res.json())
-        .then(data => {
-          isLogging = false;
-          updateLoggingUI();
-          
-          // Hentikan interval
-          if (logIntervalId) {
-            clearInterval(logIntervalId);
-            logIntervalId = null;
-          }
-          
-          console.log("⏹️ Logging dihentikan");
-        })
-        .catch(error => {
-          alert('❌ Error saat menghentikan logging: ' + error.message);
-          console.error(error);
-        })
-        .finally(() => {
-          loggingRequestInProgress = false;
-          loggingButton.classList.remove('loading');
-        });
+        throw new Error(data.error || 'Gagal memulai logging');
       }
-    };
-
-    function updateLoggingUI() {
-      if (isLogging) {
-        loggingButton.classList.add('active');
-        loggingIcon.textContent = '⏹️';
-        loggingText.textContent = 'Stop Logging';
-      } else {
-        loggingButton.classList.remove('active');
-        loggingIcon.textContent = '📊';
-        loggingText.textContent = 'Mulai Logging';
+    })
+    .catch(error => {
+      alert('❌ Error saat memulai logging: ' + error.message);
+      console.error(error);
+    })
+    .finally(() => {
+      loggingRequestInProgress = false;
+      loggingButton.classList.remove('loading');
+    });
+  } else {
+    // Stop logging
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ action: 'stopLogging' }).toString()
+    })
+    .then(res => res.json())
+    .then(data => {
+      isLogging = false;
+      updateLoggingUI();
+      
+      // Hentikan interval
+      if (logIntervalId) {
+        clearInterval(logIntervalId);
+        logIntervalId = null;
       }
-    }
-
-    // Initialize canvas sizes with responsive dimensions
-    function initCanvasSizes() {
-      const ratio = window.devicePixelRatio || 1;
-      const frequencyCanvas = document.getElementById('frequencyChart');
-      const rpmCanvas = document.getElementById('rpmChart');
-
-      // Get actual container dimensions
-      const freqContainer = frequencyCanvas.parentElement;
-      const rpmContainer = rpmCanvas.parentElement;
       
-      const freqContainerWidth = freqContainer.offsetWidth;
-      const freqContainerHeight = freqContainer.offsetHeight;
-      
-      const rpmContainerWidth = rpmContainer.offsetWidth;
-      const rpmContainerHeight = rpmContainer.offsetHeight;
+      console.log("⏹️ Logging dihentikan");
+    })
+    .catch(error => {
+      alert('❌ Error saat menghentikan logging: ' + error.message);
+      console.error(error);
+    })
+    .finally(() => {
+      loggingRequestInProgress = false;
+      loggingButton.classList.remove('loading');
+    });
+  }
+};
 
-      // Set canvas dimensions to match container
-      frequencyCanvas.width = freqContainerWidth * ratio;
-      frequencyCanvas.height = freqContainerHeight * ratio;
-      frequencyCanvas.style.width = freqContainerWidth + "px";
-      frequencyCanvas.style.height = freqContainerHeight + "px";
+function updateLoggingUI() {
+  if (isLogging) {
+    loggingButton.classList.add('active');
+    loggingIcon.textContent = '⏹️';
+    loggingText.textContent = 'Stop Logging';
+  } else {
+    loggingButton.classList.remove('active');
+    loggingIcon.textContent = '📊';
+    loggingText.textContent = 'Mulai Logging';
+  }
+}
 
-      rpmCanvas.width = rpmContainerWidth * ratio;
-      rpmCanvas.height = rpmContainerHeight * ratio;
-      rpmCanvas.style.width = rpmContainerWidth + "px";
-      rpmCanvas.style.height = rpmContainerHeight + "px";
+    // Initialize canvas sizes with fixed dimensions
+function initCanvasSizes() {
+  const ratio = window.devicePixelRatio || 1;
+  const frequencyCanvas = document.getElementById('frequencyChart');
+  const rpmCanvas = document.getElementById('rpmChart');
 
-      // Scale context to match device pixel ratio
-      frequencyCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      rpmCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-    }
+  const containerWidth = frequencyCanvas.parentElement.offsetWidth;
+  const canvasHeight = containerWidth * 0.5;
+
+  frequencyCanvas.width = containerWidth * ratio;
+  frequencyCanvas.height = canvasHeight * ratio;
+  frequencyCanvas.style.width = containerWidth + "px";
+  frequencyCanvas.style.height = canvasHeight + "px";
+
+  rpmCanvas.width = containerWidth * ratio;
+  rpmCanvas.height = canvasHeight * ratio;
+  rpmCanvas.style.width = containerWidth + "px";
+  rpmCanvas.style.height = canvasHeight + "px";
+
+  frequencyCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  rpmCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
+
+
 
     // Chart drawing functions
     function drawChart(ctx, data, labels, title, color, yMin = 0, yMax = null) {
-      const canvas = ctx.canvas;
-      const w = canvas.width / (window.devicePixelRatio || 1);
-      const h = canvas.height / (window.devicePixelRatio || 1);
+      const w = CANVAS_WIDTH;
+      const h = CANVAS_HEIGHT;
       
       // Clear canvas
       ctx.clearRect(0, 0, w, h);
@@ -816,12 +804,8 @@
         return;
       }
       
-      // Chart margins - adjust for mobile
-      const isMobile = window.innerWidth <= 768;
-      const margin = isMobile ? 
-        { top: 10, right: 20, bottom: 35, left: 40 } : 
-        { top: 10, right: 30, bottom: 40, left: 50 };
-      
+      // Chart margins
+      const margin = { top: 10, right: 30, bottom: 40, left: 50 };
       const chartWidth = w - margin.left - margin.right;
       const chartHeight = h - margin.top - margin.bottom;
       
@@ -852,7 +836,7 @@
       }
       
       // Vertical grid lines
-      const verticalLines = isMobile ? 6 : 8;
+      const verticalLines = 8;
       for (let i = 0; i <= verticalLines; i++) {
         const x = margin.left + (chartWidth / verticalLines) * i;
         ctx.beginPath();
@@ -863,19 +847,19 @@
       
       // Draw Y-axis labels
       ctx.fillStyle = '#666';
-      ctx.font = isMobile ? '10px Arial' : '12px Arial';
+      ctx.font = '12px Arial';
       ctx.textAlign = 'right';
       
       for (let i = 0; i <= 5; i++) {
         const value = minVal + (range / 5) * (5 - i);
         const y = margin.top + (chartHeight / 5) * i;
-        ctx.fillText(value.toFixed(0), margin.left - 5, y + 4);
+        ctx.fillText(value.toFixed(0), margin.left - 10, y + 4);
       }
       
       // Draw X-axis labels with better time formatting
       ctx.textAlign = 'center';
       ctx.fillStyle = '#666';
-      ctx.font = isMobile ? '9px Arial' : '11px Arial';
+      ctx.font = '11px Arial';
       
       if (timeLabels.length > 0) {
         // Show first and last time labels
